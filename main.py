@@ -1,0 +1,126 @@
+import sys
+from multiprocessing import Process
+
+import ocrmypdf
+from PyQt6.QtWidgets import *
+
+class MainWindow(QDialog):
+    def __init__(self, parent=None):
+        super(MainWindow, self).__init__(parent)
+
+        self.originalPalette = QApplication.palette()
+
+        # Languages
+        # TODO: more languages
+        self.groupbox = QGroupBox("Sprachen")
+        self.radio_deutsch = QCheckBox("Deutsch")
+        self.radio_deutsch.setChecked(True)
+        self.radio_englisch = QCheckBox("Englisch")
+        self.radio_spanisch = QCheckBox("Spanisch")
+        self.goButton = QPushButton("&Start")
+        self.goButton.clicked.connect(start_clicked)
+
+        # replace file checkbox
+        self.replaceFile = QCheckBox("&Datei ersetzen")
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.radio_deutsch)
+        layout.addWidget(self.radio_englisch)
+        layout.addWidget(self.radio_spanisch)
+        layout.addStretch(1)
+        self.groupbox.setLayout(layout)
+
+        mainlayout = QGridLayout()
+        mainlayout.addWidget(self.replaceFile)
+        mainlayout.addWidget(self.groupbox, 1, 0)
+        # self.createProgressBar()
+        mainlayout.addWidget(self.goButton)
+        mainlayout.setRowStretch(1, 1)
+        mainlayout.setRowStretch(2, 1)
+        mainlayout.setColumnStretch(0, 1)
+        mainlayout.setColumnStretch(1, 1)
+        self.setLayout(mainlayout)
+        self.setWindowTitle("OCR")
+
+        # Windows theme O_O
+        # self.changeStyle('Windows')
+
+    def change_style(self, stylename):
+        QApplication.setStyle(QStyleFactory.create(stylename))
+        self.change_palette()
+
+    def change_palette(self):
+        # Use standard color palette?
+        QApplication.setPalette(QApplication.style().standardPalette())
+        # QApplication.setPalette(self.originalPalette)
+
+    # TODO: progress bar
+    # FIXME: get intermediate status from OCRmyPDF process
+    # def createProgressBar(self):
+    #     self.progressBar = QProgressBar()
+    #     self.progressBar.setRange(0, 100)
+    #     self.progressBar.setValue(0)
+
+    def closeEvent(self, e):
+        QApplication.instance().quit()
+        sys.exit(0)
+
+
+
+def ocrmypdf_process():
+    languages = []
+    outputfile_string = sys.argv[1]
+    if mainWindow.radio_deutsch.isChecked():
+        languages.append('deu')
+    if mainWindow.radio_englisch.isChecked():
+        languages.append('eng')
+    if mainWindow.radio_spanisch.isChecked():
+        languages.append('spa')
+    if not mainWindow.replaceFile.isChecked():
+        outputfile_string = outputfile_string + '.ocr'
+    statuscode = ocrmypdf.ocr(sys.argv[1], outputfile_string, progress_bar=False, language=languages)
+    if statuscode == 0:
+        # success
+        sys.exit(0)
+    else:
+        sys.exit(statuscode)
+
+def call_ocrmypdf():
+    p = Process(target=ocrmypdf_process)
+    p.start()
+    p.join() # FIXME this lets the UI thread hang
+    if not p.exitcode == 0:
+        sys.exit(0)
+    else:
+        kek = ErrorDialog(p.exitcode)
+        kek.exec()
+
+class ErrorDialog(QDialog):
+    def __init__(self, status, parent=None):
+        super().__init__(parent)
+
+        self.setWindowTitle("Fehler")
+
+        self.buttonBox = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        self.buttonBox.accepted.connect(self.accept)
+        # self.buttonBox.rejected.connect(self.reject)
+        layout = QVBoxLayout()
+        message = QLabel("OCRmyPDF wurde mit einem Fehler beendet. Status-Code: " + status)
+        layout.addWidget(message)
+        layout.addWidget(self.buttonBox)
+        self.setSizeGripEnabled(True)
+        self.resize(0, 0) # shit workaround so that the window has minimum size
+        self.setLayout(layout)
+
+def start_clicked():
+    # FIXME: text not changing
+    mainWindow.goButton.setText("läuft...")
+    mainWindow.goButton.setEnabled(False)
+    call_ocrmypdf()
+
+if __name__ == '__main__':
+    app = QApplication([])
+    mainWindow = MainWindow()
+    mainWindow.show()
+    app.exec()
+    sys.exit(app.exec())
