@@ -5,6 +5,7 @@ Please make sure you have the following packages installed:
 ```
 python (version 3)
 python-pyqt6
+ocrmypdf (see Arch User Repository)
 tesseract (OCR)
 tesseract-data-eng (English OCR data)
 tesseract-data-deu (German OCR data)
