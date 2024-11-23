@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Service
+MimeType=image/png;image/jpeg;application/pdf;
+Actions=doOCR
+
+[Desktop Action doOCR]
+Name=Run OCR
+Icon=viewpdf
+Exec=python /usr/bin/dolphin_ocr "%u"
