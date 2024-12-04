@@ -25,3 +25,9 @@ sudo cp dolphin_ocr /usr/bin/
 <img src="screenshot.png">
 
 Note: After clicking start, the window will hang while OCR is running and close itself after success.
+
+## TODO/Improvements
+- [x] Progressbar
+- [ ] Error handling
+- [ ] More languages
+- [ ] Multiple files
